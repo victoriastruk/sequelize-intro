@@ -1,4 +1,4 @@
-const { sequelize, Student } = require('./models');
+const { sequelize, Student, Group } = require('./models');
 
 // sequelize
 //   .sync({ force: true })
@@ -6,134 +6,66 @@ const { sequelize, Student } = require('./models');
 //   .catch((err) => console.log('Err: ', err));
 
 (async function () {
-  //CRUD
-  //   //C - INSERT - create
-  //   const newStudent = {
-  //     firstName: 'Test6',
-  //     lastName: 'Testovych6',
-  //     email: 'test6@gmail.com',
-  //     birthday: '2000-10-12',
-  //     isMale: true,
-  //   };
-  //   const createdStudent = await Student.create(newStudent);
-  //   console.log('CretedStudent: ', createdStudent.get());
+  //   student n:1 group
+  //  Student(firstName, ..., groupId REFERENCES group)
 
-  // R - SELECT - findAll / findOne / findByPk
-  //   const foundStudents = await Student.findAll({ raw: true });
-  //   console.log('foundStudents', foundStudents);
+  const newGroup1 = { title: 'pe2022-1', enteredAt: '2022-01-01' };
+  const newGroup2 = { title: 'pe2023-1', enteredAt: '2023-01-01' };
 
-  // const foundStudent = await Student.findByPk(1, { raw: true });
-  //   console.log('foundStudent', foundStudent);
+  // const createdGroup1 = await Group.create(newGroup1);
+  // const createdGroup2 = await Group.create(newGroup2);
 
-  //Проєкція - SELECT
-  //   const foundStudents = await Student.findAll({
-  //     raw: true,
-  //     attributes: ['firstName', 'email'],
-  //   });
-  //   console.log('foundStudents', foundStudents);
+  // console.log(createdGroup1, createdGroup2);
 
-  //Пагінація + сортування
-  // сортування - ORDER BY - order
-  //пагінація - LIMIT OFFSET - LIMIT offset
-  //   const foundStudents = await Student.findAll({
-  //     raw: true,
-  //     order: [['id', 'DESC']],
-  //     limit: 2,
-  //     offset: 2,
-  //     attributes: { exclude: ['createdAt', 'updatedAt'] },
-  //   });
-  //   console.log('foundStudents', foundStudents);
+  const newStudent1 = {
+    firstName: 'Test',
+    lastName: 'Testovych',
+    email: 'm@m1.com',
+    groupId: 1,
+  };
 
-  //Фільтрація
-  //WHERE - where
-  // id=5
-  //   const foundStudents = await Student.findAll({
-  //     raw: true,
-  //     where: { id: 3 },
-  //   });
-  //   console.log('foundStudents', foundStudents);
+  const newStudent2 = {
+    firstName: 'Test',
+    lastName: 'Testovych',
+    email: 'm@m2.com',
+    groupId: 1,
+  };
 
-  // Task: Вивести чоловіків або у кого кількість активностей = 0
-  const foundStudent = await Student.findAll({
-    raw: true,
-    where: {
-      [Op.or]: [{ isMale: true }, { activitiesCount: 0 }],
-    },
-  });
-  console.log(foundStudent);
+  const newStudent3 = {
+    firstName: 'Test',
+    lastName: 'Testovych',
+    email: 'm@m3.com',
+    groupId: 2,
+  };
 
-  // Використання функцій -----
-  // sequelize.fn('ФУНКЦІЯ', sequelize.col('СТОВПЧИК'))
+  // const createdStudent1 = await Student.create(newStudent1);
+  // const createdStudent2 = await Student.create(newStudent2);
+  // const createdStudent3 = await Student.create(newStudent3);
+  // console.log(createdStudent1, createdStudent2, createdStudent3);
 
-  // Додати COUNT(id)
-  const studentsCount = await Student.findAll({
-    raw: true,
-    attributes: [sequelize.fn('COUNT', sequelize.col('id'))],
-  });
-  console.log('studentsCount :>> ', studentsCount);
+  // Eager Loading ~ JOINS - отримаємо інформацію з усіх моделей (foreign keys)
+  // const foundStudentsWithGroups = await Student.findAll({
+  //   raw: true,
+  //   include: 'Group',
+  // });
 
-  // + Додавання стовпчика - include
+  // console.log('foundStudentsWithGroups :>> ', foundStudentsWithGroups);
 
-  // Додати стовпчик з віком
-  //   const foundStudents = await Student.findAll({
-  //     raw: true,
-  //     attributes: {
-  //       include: [[sequelize.fn('age', sequelize.col('birthday')), 'stud_age']],
-  //     },
-  //   });
-  //   console.log('foundStudents :>> ', foundStudents);
+  // const foundGroupsWithStudents = await Group.findAll({
+  //   raw: true,
+  //   include: 'Student',
+  // });
+  // console.log('foundGroupsWithStudents :>> ', foundGroupsWithStudents);
 
-  // Нестандартні для sequelize операції прописуються чистим SQL:
-  // sequelize.literal('SQL-код')
+  // Lazy loading - отримаємо інформацію з пов'язаної моделі (associations)
 
-  //   const foundStudents = await Student.findAll({
-  //     raw: true,
-  //     attributes: {
-  //       include: [
-  //         [sequelize.literal('EXTRACT (YEAR FROM age(birthday))'), 'stud_age'],
-  //       ],
-  //     },
-  //   });
-  //   console.log('foundStudents :>> ', foundStudents);
+  //  Student.belongsTo => student.getGroup(), ...
+  // const student1Inst = await Student.findByPk(1);
+  // const groupOfStud1 = await student1Inst.getGroup({ raw: true });
+  // console.log('groupOfStud1 :>> ', groupOfStud1);
 
-  // *GROUP BY + HAVING - group + having -----
-
-  const foundStudents = await Student.findAll({
-    raw: true,
-    attributes: [
-      'isMale',
-      [
-        sequelize.fn('sum', sequelize.col('activitiesCount')),
-        'stud_activitiesCount',
-      ],
-    ],
-    group: 'isMale',
-    having: sequelize.literal('sum("activitiesCount") >= 0'),
-  });
-  console.log('foundStudets :>> ', foundStudents);
-
-  // U - UPDATE - update (як, опції)
-  // => [ кількість_оновлених ]                без returning: true
-  // => [ кількість_оновлених, масив оновлених ] з returning: true
-
-  const updatedStudent = await Student.update(
-    { firstName: 'Ivo' },
-    {
-      where: { id: 1 },
-      raw: true,
-      returning: true, // повернути оновлений рядок
-    }
-  );
-
-  console.log('updatedStudent :>> ', updatedStudent[1][0]);
-
-  // D - DELETE - destroy
-  // => кількість оновлених
-
-  const deletedStudCount = await Student.destroy({
-    where: {
-      id: 1,
-    },
-  });
-  console.log('deletedStudCount :>> ', deletedStudCount);
+  // Group.hasMany => group.getStudents(), ...
+  const group1Inst = await Group.findByPk(1);
+  const studOfGroup1 = await group1Inst.getStudents({ raw: true });
+  console.log('studOfGroup1 :>> ', studOfGroup1);
 })();
