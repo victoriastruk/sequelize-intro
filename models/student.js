@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       Student.belongsTo(models.Group, { foreignKey: 'groupId' });
+      Student.belongsToMany(models.Subject, {
+        through: 'StudentSubjects',
+        foreignKey: 'studentId',
+      });
     }
   }
   /* Обмеження
